@@ -19,16 +19,10 @@
 package com.stealthyone.mcb.mcml;
 
 import mkremins.fanciful.FancyMessage;
-import org.apache.commons.lang.Validate;
 
 abstract class MCMLHoverEvent {
 
-    public static MCMLHoverEvent parseText(MCMLBuilder builder, String rawText) {
-        Validate.notNull(rawText, "Raw text cannot be null.");
-        if (!rawText.matches("\\((ach|itm|txt):(.+)\\)")) {
-            throw new IllegalArgumentException("Invalid hover event syntax: '" + rawText + "'");
-        }
-
+    static MCMLHoverEvent parseText(MCMLBuilder builder, String rawText) {
         switch (rawText.substring(1, 4)) {
             case "ach":
                 return new MCMLHoverEventAchievement(rawText);
@@ -42,6 +36,6 @@ abstract class MCMLHoverEvent {
         return null;
     }
 
-    public abstract void buildOn(FancyMessage message);
+    abstract void buildOn(FancyMessage message);
 
 }

@@ -34,7 +34,7 @@ class MCMLClickEventURL extends MCMLClickEvent {
     }
 
     @Override
-    public void buildOn(FancyMessage message) {
+    void buildOn(FancyMessage message) {
         message.link(url);
     }
 

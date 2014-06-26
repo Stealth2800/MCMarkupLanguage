@@ -34,7 +34,7 @@ class MCMLClickEventSuggestCommand extends MCMLClickEvent {
     }
 
     @Override
-    public void buildOn(FancyMessage message) {
+    void buildOn(FancyMessage message) {
         message.suggest(command);
     }
 

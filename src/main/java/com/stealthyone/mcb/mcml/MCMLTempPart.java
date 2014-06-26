@@ -25,6 +25,7 @@ import java.util.List;
 
 final class MCMLTempPart {
 
+    StringBuilder text = new StringBuilder();
     List<Character> chars = new ArrayList<>();
     ChatColor color;
     boolean isBold = false;
@@ -36,11 +37,7 @@ final class MCMLTempPart {
     MCMLHoverEvent hoverEvent;
 
     public String getText() {
-        StringBuilder sb = new StringBuilder();
-        for (Character character : chars) {
-            sb.append(character);
-        }
-        return sb.length() == 0 ? null : sb.toString();
+        return text.length() == 0 ? null : text.toString();
     }
 
 }

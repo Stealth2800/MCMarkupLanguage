@@ -26,6 +26,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class MCMLBuilder {
 
@@ -33,6 +35,10 @@ public class MCMLBuilder {
     private List<MCMLTempPart> parts = new ArrayList<>();
 
     private Map<String, Object> replacements;
+
+    final static Pattern EVENT_BEGIN_PATTERN = Pattern.compile("(\\((ach|itm|txt)|\\[(cmd|scmd|url)):(.+)");
+    final static Pattern COLOR_PATTERN = Pattern.compile("&[a-f0-9]");
+    final static Pattern FORMAT_PATTERN = Pattern.compile("&[l-o|kr]");
 
     public MCMLBuilder(String inputText) {
         this(inputText, new HashMap<String, Object>());
@@ -44,95 +50,209 @@ public class MCMLBuilder {
         Validate.noNullElements(replacements.keySet(), "Replacements map cannot contain null keys.");
         this.replacements = replacements;
 
-        char[] inputChars = inputText.toCharArray();
-
+        // Separate into different parts
         curPart = new MCMLTempPart();
-        int lastTextIndex = -1;
 
-        mainLoop:
-        for (int i = 0; i < inputChars.length; i++) {
-            if (inputChars[i] == '[') {
-                // Click event?
-                // Try to find the end
-                for (int j = i; j < inputChars.length; j++) {
-                    if (inputChars[j] == ']') {
-                        // Found the end
+        char[] chars = inputText.toCharArray();
+        int lastTextIndex = -1;
+        for (int i = 0; i < chars.length; i++) {
+            if (MCMLBuilder.EVENT_BEGIN_PATTERN.matcher(inputText.substring(i)).matches()) {
+                // Attempt to get event
+                int balancedEnd = getBalancedGroupingSymbol(chars[i], inputText, i);
+                if (balancedEnd != -1) {
+                    if (curPart.chars.size() > 0) {
+                        handleRawText(curPart.chars);
+                    }
+
+                    String trimmedEvent = inputText.substring(i, balancedEnd + 1);
+                    if (trimmedEvent.startsWith("[")) {
+                        // Get click event
                         MCMLClickEvent clickEvent;
                         try {
-                            clickEvent = MCMLClickEvent.parseText(this, inputText.substring(i, j + 1));
+                            clickEvent = MCMLClickEvent.parseText(this, trimmedEvent);
                         } catch (Exception ex) {
                             // Not valid syntax
-                            ex.printStackTrace();
-                            break;
+                            continue;
                         }
 
                         curPart.clickEvent = clickEvent;
-                        i = j;
-
-                        continue mainLoop;
-                    }
-                }
-            } else if (inputChars[i] == '(') {
-                // Hover event?
-                // Try to find the end
-                for (int j = i; j < inputChars.length; j++) {
-                    if (inputChars[j] == ')') {
-                        // Found the end
+                        i = balancedEnd;
+                    } else {
+                        // Get hover event
                         MCMLHoverEvent hoverEvent;
                         try {
-                            hoverEvent = MCMLHoverEvent.parseText(this, inputText.substring(i, j + 1));
+                            hoverEvent = MCMLHoverEvent.parseText(this, trimmedEvent);
                         } catch (Exception ex) {
                             // Not valid syntax
-                            ex.printStackTrace();
-                            break;
+                            continue;
                         }
 
                         curPart.hoverEvent = hoverEvent;
-                        i = j;
-
-                        continue mainLoop;
+                        i = balancedEnd;
                     }
+                    continue;
                 }
-            } else if (inputChars[i] != '&') {
-                // Character is not an ampersand, add to text
-                if (lastTextIndex != -1 && lastTextIndex != i - 1) {
-                    // There was some sort of break between text, end this section
-                    advanceCurPart();
-                }
-                curPart.chars.add(inputChars[i]);
-                lastTextIndex = i;
-                continue;
             }
 
-            // Character is an ampersand, check to see if it's a color or formatting code
-            char next;
-            try {
-                next = inputChars[i + 1];
-            } catch (IndexOutOfBoundsException ex) {
-                // End of string, end the loop.
-                break;
+            // Just a normal character, add to the string.
+            if (lastTextIndex != -1 && lastTextIndex != i - 1) {
+                handleRawText(curPart.chars);
+                advanceCurPart();
             }
-
-            ChatColor chatColor = ChatColor.getByChar(next);
-            if (chatColor == null) {
-                // Invalid chat color, ignore the code
-                continue;
-            }
-            checkChatColor(chatColor);
-            lastTextIndex = -1;
-            i++;
+            curPart.chars.add(chars[i]);
+            lastTextIndex = i;
         }
+
+        handleRawText(curPart.chars);
         parts.add(curPart);
     }
 
+    /**
+     * Gets the index of the next grouping symbol that balances out the first.
+     *
+     * @param balChar Character to balance, either [ or (.
+     * @param text Text to check.
+     * @param fromIndex What index of the text to start from. Should match the balChar.
+     * @return The index of the balancing symbol.
+     *         -1 if no balance was found.
+     */
+    private int getBalancedGroupingSymbol(char balChar, String text, int fromIndex) {
+        char otherChar = balChar == '[' ? ']' : ')';
+
+        char[] array = text.toCharArray();
+        int bal = 0;
+        for (int i = fromIndex; i < array.length; i++) {
+            if (array[i] == balChar) {
+                bal++;
+            } else if (array[i] == otherChar) {
+                if (--bal == 0) {
+                    return i;
+                }
+            }
+        }
+        return -1;
+    }
+
+    /**
+     * Advances the current part of the message we're working on.
+     */
     private void advanceCurPart() {
         parts.add(curPart);
         curPart = new MCMLTempPart();
     }
 
-    private void checkChatColor(ChatColor chatColor) {
+    private void handleRawText(List<Character> characterList) {
+        StringBuilder string = new StringBuilder();
+        for (Character ch : characterList) {
+            string.append(ch);
+        }
+        handleRawText(string.toString());
+    }
+
+    /**
+     * Colors and formats specified text before adding it to the curPart.
+     *
+     * @param text Text to color and format.
+     */
+    private void handleRawText(String text) {
+        if (curPart.getText() != null) return;
+        if (!matchColors(text) && !matchFormats(text)) {
+            // No colors or formats were found at all, lets just add the text as it is
+            addFinalText(text);
+        }
+    }
+
+    /**
+     * Adds finalized text to the cur part.
+     *
+     * @param text Text to add.
+     */
+    private void addFinalText(String text) {
+        if (curPart.getText() != null) {
+            advanceCurPart();
+        }
+        curPart.text.append(text);
+    }
+
+    private boolean matchColors(String text) {
+        Matcher colorMatcher = MCMLBuilder.COLOR_PATTERN.matcher(text);
+        boolean matches = false;
+        int lastIndex = 0;
+
+        while (colorMatcher.find()) {
+            matches = true;
+
+            // Text before the color code
+            String subStr = text.substring(lastIndex, colorMatcher.start());
+            if (subStr.length() > 0) {
+                // If there actually is text before the color code, check for formats
+                if (!matchFormats(subStr)) {
+                    // If there aren't any formats, the text wasn't added, so lets add it here
+                    addFinalText(subStr);
+                }
+            }
+            lastIndex = colorMatcher.end();
+
+            // The color code
+            String rawColor = colorMatcher.group();
+            applyChatColors(ChatColor.getByChar(rawColor.charAt(1)));
+        }
+
+        if (matches) {
+            // If there were matches, the last part of the text was not added
+            String last = text.substring(lastIndex, text.length());
+            if (last.length() > 0) {
+                // There actually is text after the last color code
+                if (!matchFormats(last)) {
+                    // If there aren't any formats, the text wasn't added, so lets add it here
+                    curPart.text.append(last);
+                }
+            }
+        }
+
+        return matches;
+    }
+
+    private boolean matchFormats(String text) {
+        Matcher formatMatcher = MCMLBuilder.FORMAT_PATTERN.matcher(text);
+        boolean matches = false;
+        int lastIndex = 0;
+
+        while (formatMatcher.find()) {
+            matches = true;
+
+            // Text before the formatting code
+            String subStr = text.substring(lastIndex, formatMatcher.start());
+            if (subStr.length() > 0) {
+                addFinalText(subStr);
+            }
+            lastIndex = formatMatcher.end();
+
+            String rawFormat = formatMatcher.group();
+            applyChatColors(ChatColor.getByChar(rawFormat.charAt(1)));
+        }
+
+        if (matches) {
+            // If there were matches, the last part of the text was not added
+            String last = text.substring(lastIndex, text.length());
+            if (last.length() > 0) {
+                // Using append because it's part of the previous string
+                curPart.text.append(last);
+            }
+        }
+
+        return matches;
+    }
+
+    /**
+     * Applies chat colors to the text in the curPart.
+     *
+     * @param chatColor ChatColor to apply.
+     */
+    private void applyChatColors(ChatColor chatColor) {
         // Valid chat color, now is it a format or color?
         if (curPart.getText() != null) {
+            // This causes the color formatting to behave like ChatColor.translateAlternateColorCodes formats strings.
             ChatColor oldColor = curPart.color;
             advanceCurPart();
             curPart.color = oldColor;
@@ -149,14 +269,17 @@ public class MCMLBuilder {
             // Not a color code, must be a formatting code
             switch (chatColor) {
                 case BOLD:
+                    if (curPart.isBold) advanceCurPart();
                     curPart.isBold = true;
                     break;
 
                 case ITALIC:
+                    if (curPart.isItalic) advanceCurPart();
                     curPart.isItalic = true;
                     break;
 
                 case MAGIC:
+                    if (curPart.isMagic) advanceCurPart();
                     curPart.isMagic = true;
                     break;
 
@@ -166,14 +289,20 @@ public class MCMLBuilder {
                     break;
 
                 case STRIKETHROUGH:
+                    if (curPart.isStrikethrough) advanceCurPart();
                     curPart.isStrikethrough = true;
                     break;
 
                 case UNDERLINE:
+                    if (curPart.isUnderline) advanceCurPart();
                     curPart.isUnderline = true;
                     break;
             }
         }
+    }
+
+    Object getReplacement(String key) {
+        return replacements.get(key);
     }
 
     private ChatColor[] getStyles(MCMLTempPart part) {
@@ -191,10 +320,6 @@ public class MCMLBuilder {
             styles.add(ChatColor.UNDERLINE);
 
         return styles.toArray(new ChatColor[styles.size()]);
-    }
-
-    Object getReplacement(String key) {
-        return replacements.get(key);
     }
 
     public FancyMessage buildFancyMessage() {

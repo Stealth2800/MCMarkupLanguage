@@ -34,7 +34,7 @@ class MCMLHoverEventAchievement extends MCMLHoverEvent {
     }
 
     @Override
-    public void buildOn(FancyMessage message) {
+    void buildOn(FancyMessage message) {
         message.achievementTooltip(achievement);
     }
 
