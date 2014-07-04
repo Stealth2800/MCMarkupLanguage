@@ -31,6 +31,8 @@ import java.util.regex.Pattern;
 
 public class MCMLBuilder {
 
+    private String rawText;
+
     private MCMLTempPart curPart;
     private List<MCMLTempPart> parts = new ArrayList<>();
 
@@ -48,6 +50,7 @@ public class MCMLBuilder {
         Validate.notNull(inputText, "Input text cannot be null.");
         Validate.notNull(replacements, "Replacements cannot be null.");
         Validate.noNullElements(replacements.keySet(), "Replacements map cannot contain null keys.");
+        this.rawText = inputText;
         this.replacements = replacements;
 
         // Separate into different parts
@@ -105,6 +108,10 @@ public class MCMLBuilder {
 
         handleRawText(curPart.chars);
         parts.add(curPart);
+    }
+
+    public MCMLBuilder useReplacements(Map<String, Object> replacements) {
+        return new MCMLBuilder(rawText, replacements);
     }
 
     /**
@@ -322,6 +329,11 @@ public class MCMLBuilder {
         return styles.toArray(new ChatColor[styles.size()]);
     }
 
+    /**
+     * Builds the text into Fanciful's FancyMessage class.
+     *
+     * @return New FancyMessage instance.
+     */
     public FancyMessage buildFancyMessage() {
         FancyMessage message = new FancyMessage();
 
@@ -360,6 +372,46 @@ public class MCMLBuilder {
         }
 
         return message;
+    }
+
+    /**
+     * Builds a string version of the message in order to be able to send messages to the console from this class.
+     *
+     * @param colors Whether or not to include colors.
+     * @param formatting Whether or not to include the formatting codes.
+     * @return The simplified string.
+     */
+    public String buildNormalMessage(boolean colors, boolean formatting) {
+        StringBuilder sb = new StringBuilder();
+
+        for (MCMLTempPart part : parts) {
+            if (part.getText() == null) {
+                continue;
+            }
+
+            if (colors) sb.append(part.color);
+
+            if (formatting) {
+                if (part.isBold) sb.append(ChatColor.BOLD);
+                if (part.isItalic) sb.append(ChatColor.ITALIC);
+                if (part.isMagic) sb.append(ChatColor.MAGIC);
+                if (part.isUnderline) sb.append(ChatColor.UNDERLINE);
+                if (part.isStrikethrough) sb.append(ChatColor.STRIKETHROUGH);
+            }
+
+            sb.append(part.getText());
+        }
+
+        return sb.toString();
+    }
+
+    /**
+     * Doesn't really 'build' anything, just returns the raw message.  The name is to be consistent with the other two 'build' methods.
+     *
+     * @return The raw string.
+     */
+    public String buildRawMessage() {
+        return rawText;
     }
 
 }
