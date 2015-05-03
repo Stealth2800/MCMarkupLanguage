@@ -26,6 +26,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -36,38 +37,54 @@ public class MCMLBuilder {
     private MCMLTempPart curPart;
     private List<MCMLTempPart> parts = new ArrayList<>();
 
-    private Map<String, Object> replacements;
+    private Map<String, Object> itemReplacements = new HashMap<>();
 
-    final static Pattern EVENT_BEGIN_PATTERN = Pattern.compile("(\\((ach|itm|txt)|\\[(cmd|scmd|url)):(.+)");
+    final static Pattern EVENT_BEGIN_PATTERN = Pattern.compile("(\\((ach|itm|txt)|\\[(cmd|scmd|url)):(.*)");
     final static Pattern COLOR_PATTERN = Pattern.compile("&[a-f0-9]");
     final static Pattern FORMAT_PATTERN = Pattern.compile("&[l-o|kr]");
+    final static Pattern CHATCOLOR_PATTERN = Pattern.compile("&[a-f0-9l-o|kr]");
 
     public MCMLBuilder(String inputText) {
-        this(inputText, new HashMap<String, Object>());
+        this(inputText, null);
     }
 
-    public MCMLBuilder(String inputText, Map<String, Object> replacements) {
+    public MCMLBuilder(String inputText, Map<String, String> replacements) {
+        this(inputText, replacements, null);
+    }
+
+    public MCMLBuilder(String inputText, Map<String, String> replacements, Map<String, Object> itemReplacements) {
         Validate.notNull(inputText, "Input text cannot be null.");
-        Validate.notNull(replacements, "Replacements cannot be null.");
-        Validate.noNullElements(replacements.keySet(), "Replacements map cannot contain null keys.");
+
         this.rawText = inputText;
-        this.replacements = replacements;
+
+        if (replacements != null) {
+            for (Entry<String, String> entry : replacements.entrySet()) {
+                rawText = rawText.replace(entry.getKey(), entry.getValue());
+            }
+        }
+
+        this.rawText = rawText.replace(ChatColor.COLOR_CHAR, '&');
+
+        if (itemReplacements != null) {
+            this.itemReplacements.putAll(itemReplacements);
+        }
 
         // Separate into different parts
         curPart = new MCMLTempPart();
 
-        char[] chars = inputText.toCharArray();
+        char[] chars = rawText.toCharArray();
         int lastTextIndex = -1;
         for (int i = 0; i < chars.length; i++) {
-            if (MCMLBuilder.EVENT_BEGIN_PATTERN.matcher(inputText.substring(i)).matches()) {
+            if (MCMLBuilder.EVENT_BEGIN_PATTERN.matcher(rawText.substring(i)).matches()) {
                 // Attempt to get event
-                int balancedEnd = getBalancedGroupingSymbol(chars[i], inputText, i);
+                int balancedEnd = getBalancedGroupingSymbol(chars[i], rawText, i);
                 if (balancedEnd != -1) {
                     if (curPart.chars.size() > 0) {
                         handleRawText(curPart.chars);
                     }
 
-                    String trimmedEvent = inputText.substring(i, balancedEnd + 1);
+                    String trimmedEvent = rawText.substring(i, balancedEnd + 1);
+                    i = balancedEnd;
                     if (trimmedEvent.startsWith("[")) {
                         // Get click event
                         MCMLClickEvent clickEvent;
@@ -79,7 +96,6 @@ public class MCMLBuilder {
                         }
 
                         curPart.clickEvent = clickEvent;
-                        i = balancedEnd;
                     } else {
                         // Get hover event
                         MCMLHoverEvent hoverEvent;
@@ -91,7 +107,6 @@ public class MCMLBuilder {
                         }
 
                         curPart.hoverEvent = hoverEvent;
-                        i = balancedEnd;
                     }
                     continue;
                 }
@@ -110,8 +125,16 @@ public class MCMLBuilder {
         parts.add(curPart);
     }
 
-    public MCMLBuilder useReplacements(Map<String, Object> replacements) {
+    public MCMLBuilder useReplacements(Map<String, String> replacements) {
         return new MCMLBuilder(rawText, replacements);
+    }
+
+    public MCMLBuilder useAllReplacements(Map<String, String> replacements, Map<String, Object> itemReplacements) {
+        return new MCMLBuilder(rawText, replacements, itemReplacements);
+    }
+
+    public MCMLBuilder useItemReplacements(Map<String, Object> itemReplacements) {
+        return new MCMLBuilder(rawText, null, itemReplacements);
     }
 
     /**
@@ -163,8 +186,8 @@ public class MCMLBuilder {
      */
     private void handleRawText(String text) {
         if (curPart.getText() != null) return;
-        if (!matchColors(text) && !matchFormats(text)) {
-            // No colors or formats were found at all, lets just add the text as it is
+
+        if (!matchChatColors(text)) {
             addFinalText(text);
         }
     }
@@ -181,28 +204,24 @@ public class MCMLBuilder {
         curPart.text.append(text);
     }
 
-    private boolean matchColors(String text) {
-        Matcher colorMatcher = MCMLBuilder.COLOR_PATTERN.matcher(text);
+    private boolean matchChatColors(String text) {
+        Matcher codeMatcher = MCMLBuilder.CHATCOLOR_PATTERN.matcher(text);
         boolean matches = false;
         int lastIndex = 0;
 
-        while (colorMatcher.find()) {
+        while (codeMatcher.find()) {
             matches = true;
 
-            // Text before the color code
-            String subStr = text.substring(lastIndex, colorMatcher.start());
+            // Text before the code
+            String subStr = text.substring(lastIndex, codeMatcher.start());
             if (subStr.length() > 0) {
                 // If there actually is text before the color code, check for formats
-                if (!matchFormats(subStr)) {
-                    // If there aren't any formats, the text wasn't added, so lets add it here
-                    addFinalText(subStr);
-                }
+                addFinalText(subStr);
             }
-            lastIndex = colorMatcher.end();
+            lastIndex = codeMatcher.end();
 
-            // The color code
-            String rawColor = colorMatcher.group();
-            applyChatColors(ChatColor.getByChar(rawColor.charAt(1)));
+            String rawCode = codeMatcher.group();
+            applyChatColors(ChatColor.getByChar(rawCode.charAt(1)));
         }
 
         if (matches) {
@@ -210,41 +229,11 @@ public class MCMLBuilder {
             String last = text.substring(lastIndex, text.length());
             if (last.length() > 0) {
                 // There actually is text after the last color code
-                if (!matchFormats(last)) {
+                curPart.text.append(last);
+                /*if (!matchFormats(last)) {
                     // If there aren't any formats, the text wasn't added, so lets add it here
                     curPart.text.append(last);
-                }
-            }
-        }
-
-        return matches;
-    }
-
-    private boolean matchFormats(String text) {
-        Matcher formatMatcher = MCMLBuilder.FORMAT_PATTERN.matcher(text);
-        boolean matches = false;
-        int lastIndex = 0;
-
-        while (formatMatcher.find()) {
-            matches = true;
-
-            // Text before the formatting code
-            String subStr = text.substring(lastIndex, formatMatcher.start());
-            if (subStr.length() > 0) {
-                addFinalText(subStr);
-            }
-            lastIndex = formatMatcher.end();
-
-            String rawFormat = formatMatcher.group();
-            applyChatColors(ChatColor.getByChar(rawFormat.charAt(1)));
-        }
-
-        if (matches) {
-            // If there were matches, the last part of the text was not added
-            String last = text.substring(lastIndex, text.length());
-            if (last.length() > 0) {
-                // Using append because it's part of the previous string
-                curPart.text.append(last);
+                }*/
             }
         }
 
@@ -308,8 +297,8 @@ public class MCMLBuilder {
         }
     }
 
-    Object getReplacement(String key) {
-        return replacements.get(key);
+    Object getItemReplacement(String key) {
+        return itemReplacements.get(key);
     }
 
     private ChatColor[] getStyles(MCMLTempPart part) {

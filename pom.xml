@@ -6,7 +6,7 @@
 
     <groupId>com.stealthyone.mcb</groupId>
     <artifactId>mcml</artifactId>
-    <version>1.2.0-SNAPSHOT</version>
+    <version>1.5.3-SNAPSHOT</version>
     <name>MCMarkupLanguage</name>
     <url>http://stealthyone.com/</url>
 
@@ -33,7 +33,7 @@
 
         <repository>
             <id>fanciful-repo</id>
-            <url>https://raw.github.com/mkremins/fanciful/mvn-repo/</url>
+            <url>http://repo.franga2000.com/artifactory/public</url>
         </repository>
     </repositories>
 
@@ -48,12 +48,12 @@
         <dependency>
             <groupId>mkremins</groupId>
             <artifactId>fanciful</artifactId>
-            <version>0.2.0-SNAPSHOT</version>
+            <version>0.3.1</version>
             <scope>compile</scope>
             <exclusions>
                 <exclusion>
-                    <groupId>org.bukkit</groupId>
-                    <artifactId>craftbukkit</artifactId>
+                    <groupId>com.google.code.gson</groupId>
+                    <artifactId>gson</artifactId>
                 </exclusion>
             </exclusions>
         </dependency>
