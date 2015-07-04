@@ -45,6 +45,8 @@ public final class MCMLBuilder {
 
     final List<TempPart> parts = new ArrayList<>();
 
+    FancyMessage fancyMessage;
+
     public MCMLBuilder(String input) {
         this(input, null);
     }
@@ -122,7 +124,11 @@ public final class MCMLBuilder {
      * @return the output FancyMessage instance.
      */
     public FancyMessage getFancyMessage() {
-        FancyMessage fancyMessage = new FancyMessage();
+        if (fancyMessage != null) {
+            return fancyMessage;
+        }
+
+        fancyMessage = new FancyMessage();
 
         for (int i = 0; i < parts.size(); i++) {
             TempPart part = parts.get(i);
@@ -134,6 +140,13 @@ public final class MCMLBuilder {
         }
 
         return null;
+    }
+
+    /**
+     * @return the raw message that was inputted into this builder.
+     */
+    public String getRawMessage() {
+        return rawText;
     }
 
 }
