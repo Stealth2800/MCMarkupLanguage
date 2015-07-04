@@ -24,6 +24,7 @@
  */
 package com.stealthyone.mcb.mcml;
 
+
 import mkremins.fanciful.FancyMessage;
 import org.apache.commons.lang.Validate;
 
@@ -139,7 +140,7 @@ public final class MCMLBuilder {
             }
         }
 
-        return null;
+        return fancyMessage;
     }
 
     /**
