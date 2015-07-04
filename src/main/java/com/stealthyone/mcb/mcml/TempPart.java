@@ -77,8 +77,6 @@ final class TempPart {
         if (!this.text.contains(curPiece)) {
             this.text.add(curPiece);
         }
-
-        // Cleanup text pieces with multiple colors
     }
 
     String getTestOutput() {
