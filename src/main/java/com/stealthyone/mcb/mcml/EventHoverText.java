@@ -31,7 +31,7 @@ final class EventHoverText extends EventHover {
     FancyMessage message;
 
     EventHoverText(String text) {
-        //message = new MCMLBuilder(text).getFancyMessage();
+        message = new MCMLBuilder(text).getFancyMessage();
     }
 
     @Override
