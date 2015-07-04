@@ -26,14 +26,11 @@ package com.stealthyone.mcb.mcml;
 
 import org.junit.Test;
 
-import java.util.Arrays;
-import java.util.List;
-
 public class MCMLBuilderTest {
 
     @Test
     public void execute() {
-        List<String> strings = Arrays.asList(
+        /*List<String> strings = Arrays.asList(
             "&aThis is [&a a test](cmd:/hi);",
             "&aThis is [&a a test](cmd:/hi);(txt:YEAH!);",
             "&aThis is [&a a test](txt:YEAH!);(cmd:/hi); Pretty cool...",
@@ -44,7 +41,7 @@ public class MCMLBuilderTest {
             System.out.println("----BEGIN TEST----\n");
             testBuilder(string);
             System.out.println("\n----END TEST----\n");
-        }
+        }*/
     }
 
     private void testBuilder(String input) {
