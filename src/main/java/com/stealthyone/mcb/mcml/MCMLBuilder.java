@@ -27,18 +27,20 @@ package com.stealthyone.mcb.mcml;
 
 import mkremins.fanciful.FancyMessage;
 import org.apache.commons.lang.Validate;
+import org.bukkit.ChatColor;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public final class MCMLBuilder {
 
     static final Pattern PATTERN_EVENT = Pattern.compile("^\\((txt|ach|itm|cmd|url|scmd): *([\\S\\s]+?)\\);");
-    static final Pattern PATTERN_TEXT_GROUP = Pattern.compile("\\[(.+)\\]");
+    static final Pattern PATTERN_TEXT_GROUP = Pattern.compile("\\[(.+?)\\];");
     static final Pattern PATTERN_CHATCOLOR = Pattern.compile("&([a-f0-9l-o|kr])");
 
     String rawText;
@@ -59,7 +61,15 @@ public final class MCMLBuilder {
 
         if (this.replacements != null && replacements != null) {
             this.replacements.putAll(replacements);
+
+            for (Entry<String, Object> entry : replacements.entrySet()) {
+                if (entry.getValue() instanceof String) {
+                    this.rawText = rawText.replace(entry.getKey(), (String) entry.getValue());
+                }
+            }
         }
+
+        this.rawText = rawText.replace(ChatColor.COLOR_CHAR, '&');
 
         // Identify text groups
         int lastIndex = 0;
@@ -67,6 +77,22 @@ public final class MCMLBuilder {
         final Matcher matcher = PATTERN_TEXT_GROUP.matcher(input);
         while (matcher.find()) {
             TempPart part = new TempPart(matcher.group(1));
+            if (!parts.isEmpty()) {
+                TempPart prevPart = parts.get(parts.size() - 1);
+                TextPiece lastPiece = prevPart.text.get(prevPart.text.size() - 1);
+
+                for (TextPiece piece : part.text) {
+                    if (piece.color == null) {
+                        piece.color = lastPiece.color;
+                        piece.italicize = lastPiece.italicize;
+                        piece.bold = lastPiece.bold;
+                        piece.underline = lastPiece.underline;
+                        piece.strikeout = lastPiece.strikeout;
+                        piece.magic = lastPiece.magic;
+                    }
+                }
+
+            }
 
             if (matcher.start() > lastIndex) {
                 // Handle ungrouped text
