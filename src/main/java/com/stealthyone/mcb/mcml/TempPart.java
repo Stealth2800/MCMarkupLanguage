@@ -46,7 +46,7 @@ final class TempPart {
         while (matcher.find()) {
             int curStart = matcher.start();
 
-            if (curStart > lastEnd + 1) {
+            if (curStart > lastEnd) {
                 // Text
 
                 curPiece.text = text.substring(lastEnd, curStart);

@@ -41,7 +41,7 @@ final class TextPiece {
 
     void handleColor(ChatColor color) {
         if (color == ChatColor.RESET) {
-            this.color = null;
+            this.color = ChatColor.RESET;
             underline = false;
             strikeout = false;
             italicize = false;
@@ -94,7 +94,7 @@ final class TextPiece {
     void buildOn(FancyMessage message) {
         message.text(text);
 
-        if (color != null) {
+        if (color != null && color.isColor()) {
             message.color(color);
         }
 
