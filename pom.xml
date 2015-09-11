@@ -6,7 +6,7 @@
 
     <groupId>com.stealthyone.mcb</groupId>
     <artifactId>mcml</artifactId>
-    <version>2.0.0</version>
+    <version>2.0.1-SNAPSHOT</version>
     <name>MCMarkupLanguage</name>
     <description>Short and simple way of writing JSON messages in Minecraft</description>
     <url>http://stealthyone.com/</url>
@@ -48,8 +48,8 @@
         </repository>
 
         <repository>
-            <id>fanciful-mvn-repo</id>
-            <url>http://repo.franga2000.com/artifactory/public</url>
+            <id>stealthyone-repo</id>
+            <url>http://repo.stealthyone.com/content/groups/public</url>
         </repository>
     </repositories>
 
