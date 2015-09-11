@@ -74,7 +74,7 @@ final class TempPart {
             curPiece.text = text.substring(lastEnd);
         }
 
-        if (!this.text.contains(curPiece)) {
+        if (curPiece.text != null && !this.text.contains(curPiece)) {
             this.text.add(curPiece);
         }
     }

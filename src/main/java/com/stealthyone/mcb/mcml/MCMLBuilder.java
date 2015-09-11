@@ -159,6 +159,11 @@ public final class MCMLBuilder {
 
         for (int i = 0; i < parts.size(); i++) {
             TempPart part = parts.get(i);
+
+            if (part.text.isEmpty()) {
+                continue;
+            }
+
             part.buildOn(fancyMessage);
 
             if (i < parts.size() - 1) {
