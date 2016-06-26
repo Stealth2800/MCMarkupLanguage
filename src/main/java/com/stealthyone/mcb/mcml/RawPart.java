@@ -13,6 +13,8 @@ final class RawPart {
     boolean isUnderlined = false;
     boolean isStrikethrough = false;
     boolean isObfuscated = false;
+    HoverEvent hoverEvent = null;
+    ClickEvent clickEvent = null;
 
     void handleColor(ChatColor color) {
         System.out.println("Handling color: " + color.name());
@@ -56,7 +58,8 @@ final class RawPart {
         sb.append("italic='").append(isItalic).append("',");
         sb.append("underline='").append(isUnderlined).append("',");
         sb.append("strikethrough='").append(isStrikethrough).append("',");
-        sb.append("obfuscated='").append(isObfuscated).append("'}");
+        sb.append("obfuscated='").append(isObfuscated).append("',");
+        sb.append("index=").append(index).append("}");
 
         return sb.toString();
     }
