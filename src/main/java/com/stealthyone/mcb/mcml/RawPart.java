@@ -7,15 +7,43 @@ final class RawPart {
     int index = -1;
 
     String text = null;
-    ChatColor color = ChatColor.WHITE; // TODO: not sure what default should be
+    ChatColor color = ChatColor.RESET; // TODO: not sure what default should be
     boolean isBold = false;
     boolean isItalic = false;
     boolean isUnderlined = false;
     boolean isStrikethrough = false;
     boolean isObfuscated = false;
 
-    // TODO: Events
+    void handleColor(ChatColor color) {
+        System.out.println("Handling color: " + color.name());
+        this.color = color;
+        if (color == ChatColor.RESET) {
+            isBold = isItalic = isUnderlined = isStrikethrough = isObfuscated = false;
+        }
+    }
 
+    void handleFormat(ChatColor format) {
+        System.out.println("Handling format: " + format.name());
+        switch (format) {
+            case BOLD:
+                isBold = true;
+                break;
+            case ITALIC:
+                isItalic = true;
+                break;
+            case MAGIC:
+                isObfuscated = true;
+                break;
+            case UNDERLINE:
+                isUnderlined = true;
+                break;
+            case STRIKETHROUGH:
+                isStrikethrough = true;
+                break;
+        }
+    }
+
+    // TODO: Events
 
     @Override
     public String toString() {
@@ -28,7 +56,7 @@ final class RawPart {
         sb.append("italic='").append(isItalic).append("',");
         sb.append("underline='").append(isUnderlined).append("',");
         sb.append("strikethrough='").append(isStrikethrough).append("',");
-        sb.append("obfuscated='").append(isObfuscated).append("}");
+        sb.append("obfuscated='").append(isObfuscated).append("'}");
 
         return sb.toString();
     }

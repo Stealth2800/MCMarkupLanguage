@@ -36,7 +36,13 @@ public class MCMLBuilderTest {
         List<String> strings = Arrays.asList(
             "This is test #1",
             "&aThis is test #2",
-            "&aThis is &ctest #3"
+            "&aThis is &ctest #3",
+            "&a&lThis is test #4",
+            "&b&aThis is test #5",
+            "&b&l&rThis is test #6",
+            "&aThis is &b&ltest &c&l&n#7",
+            "&a",
+            ""
         );
 
         for (String string : strings) {
