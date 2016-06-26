@@ -34,14 +34,14 @@ public class MCMLBuilderTest {
     @Test
     public void execute() {
         List<String> strings = Arrays.asList(
-            "&aThis is [&a a test](cmd:/hi);",
-            "&aThis is [&a a test](cmd:/hi);(txt:YEAH!);",
-            "&aThis is [&a a test](txt:YEAH!);(cmd:/hi); Pretty cool...",
-            "&aThis is [&aa &btest](txt:YEAH!);(cmd:/hi); Pretty cool..."
+            "This is test #1",
+            "&aThis is test #2",
+            "&aThis is &ctest #3"
         );
 
         for (String string : strings) {
             System.out.println("----BEGIN TEST----\n");
+            System.out.println("Input: " + string + "\n");
             testBuilder(string);
             System.out.println("\n----END TEST----\n");
         }
@@ -50,8 +50,8 @@ public class MCMLBuilderTest {
     private void testBuilder(String input) {
         MCMLBuilder builder = new MCMLBuilder(input);
 
-        for (TempPart part : builder.parts) {
-            System.out.println(part.getTestOutput() + "\n\n");
+        for (RawPart part : builder.getParts()) {
+            System.out.println(part.toString() + "\n\n");
         }
     }
 
