@@ -1,5 +1,6 @@
 package com.stealthyone.mcb.mcml;
 
+import mkremins.fanciful.FancyMessage;
 import org.bukkit.ChatColor;
 
 import java.util.ArrayList;
@@ -15,6 +16,8 @@ public final class MCMLBuilder {
 
     private final List<RawPart> parts = new ArrayList<>();
 
+    private FancyMessage fancyMessage;
+
     public MCMLBuilder(String input) {
         if (input == null || input.isEmpty()) {
             // Don't process if input is null or empty
@@ -23,6 +26,7 @@ public final class MCMLBuilder {
         }
 
         process(input, true, 0);
+        condenseParts();
     }
 
     /**
@@ -41,8 +45,6 @@ public final class MCMLBuilder {
 
             Matcher eventMatcher = EVENT_PATTERN.matcher(input);
             while (eventMatcher.find()) {
-                System.out.println("Found event group");
-
                 final int startIndex = eventMatcher.start();
 
                 final int oldCount = parts.size();
@@ -56,22 +58,13 @@ public final class MCMLBuilder {
                 ClickEvent clickEvent = null;
 
                 final int groupCount = eventMatcher.groupCount() - 1;
-                System.out.println("Group count: " + groupCount);
-                System.out.println("Group: " + eventMatcher.group());
-                for (int i = 1; i <= groupCount; i++) {
-                    System.out.println("Group " + i + ": " + eventMatcher.group(i));
-                }
 
                 if (groupCount == 2 || groupCount == 4) {
-                    System.out.println("Parsing hover event");
-
                     // Hover event
                     hoverEvent = HoverEvent.parse(eventMatcher.group(groupCount));
                 }
 
                 if (groupCount == 3 || groupCount == 4) {
-                    System.out.println("Parsing click event");
-
                     // Click event
                     clickEvent = ClickEvent.parse(eventMatcher.group(2), eventMatcher.group(3));
                 }
@@ -93,7 +86,6 @@ public final class MCMLBuilder {
                 for (int i = 0; i < regions.size(); i += 2) {
                     final String substr = input.substring(regions.get(i), regions.get(i + 1));
                     if (!substr.isEmpty()) {
-                        System.out.println("Processing " + input.substring(regions.get(i), regions.get(i + 1)));
                         process(input.substring(regions.get(i), regions.get(i + 1)), false, regions.get(i));
                     }
                 }
@@ -105,12 +97,7 @@ public final class MCMLBuilder {
         while (matcher.find()) {
             final int startIndex = matcher.start();
 
-            System.out.println("Last index: " + lastIndex);
-            System.out.println("Start: " + startIndex);
-            System.out.println("Matcher group: " + matcher.group());
-
             if (curPart.text == null && curPart.index != -1 && startIndex != lastIndex) {
-                System.out.println("Adding previous loop text");
                 curPart.text = input.substring(lastIndex, startIndex);
                 parts.add(curPart);
                 curPart = new RawPart();
@@ -128,20 +115,39 @@ public final class MCMLBuilder {
             lastIndex = startIndex + matcher.group().length();
         }
 
-        System.out.println("Adding final part");
         curPart.index = lastIndex + offset;
         curPart.text = input.substring(lastIndex, input.length());
         parts.add(curPart);
     }
 
     private void condenseParts() {
-        System.out.println("Condensing parts");
         parts.sort((a, b) -> Integer.compare(a.index, b.index));
     }
 
-    // TODO: Temporary method
-    public List<RawPart> getParts() {
-        return parts;
+    public FancyMessage toFancyMessage() {
+        if (fancyMessage != null) {
+            return fancyMessage;
+        }
+
+        fancyMessage = new FancyMessage();
+
+        boolean started = false;
+        for (RawPart part : parts) {
+            if (started) {
+                fancyMessage.then(part.text);
+            } else {
+                fancyMessage.text(part.text);
+                started = true;
+            }
+
+            fancyMessage.color(part.color);
+            fancyMessage.style(part.getFormats());
+
+            part.hoverEvent.apply(fancyMessage);
+            part.clickEvent.apply(fancyMessage);
+        }
+
+        return fancyMessage;
     }
 
 }

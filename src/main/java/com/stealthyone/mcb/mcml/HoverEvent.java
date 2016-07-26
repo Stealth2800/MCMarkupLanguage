@@ -1,7 +1,6 @@
 package com.stealthyone.mcb.mcml;
 
-import java.util.ArrayList;
-import java.util.List;
+import mkremins.fanciful.FancyMessage;
 
 // TODO: Implement item and achievement hover events
 abstract class HoverEvent {
@@ -10,23 +9,40 @@ abstract class HoverEvent {
         return new TextHoverEvent(input);
     }
 
+    abstract void apply(FancyMessage message);
+
     static final class TextHoverEvent extends HoverEvent {
 
-        final List<RawPart> parts = new ArrayList<>();
+        final FancyMessage tooltip;
 
         TextHoverEvent(String input) {
             MCMLBuilder builder = new MCMLBuilder();
             builder.process(input, false, 0);
-            parts.addAll(builder.getParts());
+            tooltip = builder.toFancyMessage();
+        }
+
+        @Override
+        void apply(FancyMessage message) {
+            message.formattedTooltip(tooltip);
         }
 
     }
 
     static final class ItemHoverEvent extends HoverEvent {
 
+        @Override
+        void apply(FancyMessage message) {
+
+        }
+
     }
 
     static final class AchievementHoverEvent extends HoverEvent {
+
+        @Override
+        void apply(FancyMessage message) {
+
+        }
 
     }
 

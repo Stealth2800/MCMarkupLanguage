@@ -1,5 +1,7 @@
 package com.stealthyone.mcb.mcml;
 
+import mkremins.fanciful.FancyMessage;
+
 final class ClickEvent {
 
     private static final String TYPE_RUN_COMMAND = "!";
@@ -16,6 +18,22 @@ final class ClickEvent {
     ClickEvent(String type, String value) {
         this.type = type;
         this.value = value;
+    }
+
+    void apply(FancyMessage message) {
+        switch (type) {
+            case TYPE_RUN_COMMAND:
+                message.command(value);
+                break;
+
+            case TYPE_SUGGEST_COMMAND:
+                message.suggest(value);
+                break;
+
+            case TYPE_OPEN_URL:
+                message.link(value);
+                break;
+        }
     }
 
 }
