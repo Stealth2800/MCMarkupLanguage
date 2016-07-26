@@ -42,7 +42,8 @@ public class MCMLBuilderTest {
             "&b&l&rThis is test #6",
             "&aThis is &b&ltest &c&l&n#7",
             "&a",
-            "Hello [Alt text](!\"/say Hello\" \"Hi!\")"
+            "Hello [Alt text](!\"/say Hello\" \"Hi!\")",
+            "Hello [Alt text](!\"/say Hello\" \"Hi!\") Yay how [exciting](!\"/say Woo\" \"Woo!\")"
         );
 
         for (String string : strings) {
