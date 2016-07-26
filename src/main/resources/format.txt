@@ -1,0 +1,28 @@
+Square brackets must always have content to be considered valid syntax
+
+[Alt text](ACTION:"value" "optional hover text")
+
+Where ACTION: is:
+    ! (Command): Runs a command as the user
+    ? (Suggest command): Suggests a command for the user to run
+    > (URL): Suggests a URL for the user to open
+
+Examples:
+    [Click here!](!"/say Hello!" "Broadcast 'Hello!')
+
+----------
+
+[Alt text]("hover text")
+
+Text with hover text
+
+----------
+
+[Alt text]()
+
+Text inside square brackets will be shown normally
+
+----------
+
+Click: Command, Suggest Command, URL
+Hover: Achievement, Item, Text
