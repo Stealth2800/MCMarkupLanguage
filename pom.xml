@@ -24,11 +24,6 @@
         <url>https://github.com/Stealth2800/MCMarkupLanguage.git</url>
     </scm>
 
-    <ciManagement>
-        <system>jenkins</system>
-        <url>http://ci.stealthyone.com/</url>
-    </ciManagement>
-
     <distributionManagement>
         <repository>
             <id>stealthyone-releases</id>
