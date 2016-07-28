@@ -72,16 +72,16 @@ public final class MCMLBuilder {
                 HoverEvent hoverEvent = null;
                 ClickEvent clickEvent = null;
 
-                final int groupCount = eventMatcher.groupCount() - 1;
-
-                if (groupCount == 2 || groupCount == 4) {
-                    // Hover event
-                    hoverEvent = HoverEvent.parse(eventMatcher.group(groupCount));
-                }
-
-                if (groupCount == 3 || groupCount == 4) {
-                    // Click event
+                // Click event exists if groups 2 and 3 are not null
+                if (eventMatcher.group(2) != null && eventMatcher.group(3) != null) {
                     clickEvent = ClickEvent.parse(eventMatcher.group(2), eventMatcher.group(3));
+
+                    // Hover event exists if group 4 is not null
+                    if (eventMatcher.group(4) != null) {
+                        hoverEvent = HoverEvent.parse(eventMatcher.group(4));
+                    }
+                } else {
+                    hoverEvent = HoverEvent.parse(eventMatcher.group(5));
                 }
 
                 for (int i = 0; i < newCount - oldCount; i++) {
@@ -158,8 +158,13 @@ public final class MCMLBuilder {
             fancyMessage.color(part.color);
             fancyMessage.style(part.getFormats());
 
-            part.hoverEvent.apply(fancyMessage);
-            part.clickEvent.apply(fancyMessage);
+            if (part.hoverEvent != null) {
+                part.hoverEvent.apply(fancyMessage);
+            }
+
+            if (part.clickEvent != null) {
+                part.clickEvent.apply(fancyMessage);
+            }
         }
 
         return fancyMessage;

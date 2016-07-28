@@ -25,21 +25,21 @@ final class RawPart {
     int index = -1;
 
     String text = null;
-    ChatColor color = ChatColor.RESET;
+    ChatColor color = ChatColor.WHITE;
     List<ChatColor> formats = new ArrayList<>();
     HoverEvent hoverEvent = null;
     ClickEvent clickEvent = null;
 
     void handleColor(ChatColor color) {
-        System.out.println("Handling color: " + color.name());
-        this.color = color;
         if (color == ChatColor.RESET) {
+            this.color = ChatColor.WHITE;
             formats.clear();
+        } else {
+            this.color = color;
         }
     }
 
     void handleFormat(ChatColor format) {
-        System.out.println("Handling format: " + format.name());
         formats.add(format);
     }
 
