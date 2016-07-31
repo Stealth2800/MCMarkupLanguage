@@ -39,6 +39,21 @@ final class RawPart {
         }
     }
 
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+
+        sb.append("RawPart{");
+        sb.append("text='").append(text).append("',");
+        sb.append("color='").append(color.name()).append("',");
+        sb.append("index=").append(index).append(",");
+        sb.append("hoverEvent=").append(hoverEvent != null).append(",");
+        sb.append("clickEvent=").append(hoverEvent != null);
+        sb.append("}");
+
+        return sb.toString();
+    }
+
     void handleFormat(ChatColor format) {
         formats.add(format);
     }

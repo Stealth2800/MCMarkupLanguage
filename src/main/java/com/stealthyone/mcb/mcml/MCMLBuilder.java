@@ -19,6 +19,7 @@ import mkremins.fanciful.FancyMessage;
 import org.bukkit.ChatColor;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -112,8 +113,9 @@ public final class MCMLBuilder {
         while (matcher.find()) {
             final int startIndex = matcher.start();
 
-            if (curPart.text == null && curPart.index != -1 && startIndex != lastIndex) {
+            if (curPart.text == null && startIndex != lastIndex) {
                 curPart.text = input.substring(lastIndex, startIndex);
+                curPart.index = lastIndex;
                 parts.add(curPart);
                 curPart = new RawPart();
             }
@@ -137,6 +139,10 @@ public final class MCMLBuilder {
 
     private void condenseParts() {
         parts.sort((a, b) -> Integer.compare(a.index, b.index));
+    }
+
+    public List<RawPart> getParts() {
+        return Collections.unmodifiableList(parts);
     }
 
     public FancyMessage toFancyMessage() {
